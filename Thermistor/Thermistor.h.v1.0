@@ -1,0 +1,46 @@
+#ifndef Thermistor_h
+#define Thermistor_h
+
+#define ZeroCinK 273.15
+#define MaxAlalogRead 1023
+
+class Thermistor {
+	public:
+		// Constructor
+		Thermistor (
+			unsigned char pin, // analog pin of thermistor
+			unsigned int R0, // value of thermistor at T0
+			float T0,	// reference temperature of thermistor
+			unsigned long Rd, // value of resistor dividor
+			unsigned int B); // Temparute coeficent of thermistor
+		Thermistor (
+			unsigned char pin, // analog pin of thermistor
+			unsigned int R0, // value of thermistor at T0
+			float T0,	// reference temperature of thermistor
+			unsigned long Rd, // value of resistor dividor
+			unsigned int B, // Temparute coeficent of thermistor
+			const char *str);	// identifier string
+
+		// class functions
+		int Temperature ();	// return the thermistor's temperature
+		void aveInit ();	// setup for temp ave caculation
+		void buildAve ();	// takes a temperature reading / sec
+		int AveTemperature ();	// return the average temperature reading
+		bool isError ();	// return true is we have an error
+		const char *getIdentifierStr ();// return identifier string
+		void setIdentifierStr (const char * str);// set identifier string
+
+	private:
+		unsigned int B;	// Thermisters coefficient of resistance
+		unsigned long Rd;// Value of resistor in sereas with thermister
+		unsigned int R0;// Value of thermister at ref temperature
+		float T0;// Ref temperature
+		unsigned char Apin;// The analog pin the thermistor's voltage divider is on
+		int ATemp[10];//hold temperature values to be averaged
+		int ATempIndex;//index into ATemp, a ring buffer
+		unsigned long timeRef;// Wait 15 seconds between reading for T ave
+		bool Error;//true if we have an error.
+		const char *IdentifierStr;
+};
+
+#endif
