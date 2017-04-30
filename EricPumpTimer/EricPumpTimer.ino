@@ -519,17 +519,6 @@ boolean sendHTMLpages (char *url) {
                   }
        		}
 	}
-        /*
-        *      Misstyped page Redirects
-        */
-        if (strcmp (url, "/") == 0) {        //This Redirect is also used to connect via seeds.ca/app/pool/controller.php
-                WiServer.print ("<head><meta http-equiv='refresh' content='0; url=Eric.html' /></head>");
-                return true;
-        }
-        if (strcmp (url, "/eric.html") == 0){
-                WiServer.print ("<head><meta http-equiv='refresh' content='0; url=Eric.html' /><head>");
-                return true;
-        }
          /*
 	 *	Main HTML page
 	 */
@@ -652,6 +641,23 @@ boolean sendHTMLpages (char *url) {
              WiServer.print_P (htmlFooterEnd);
 	     return true;
         }
+        /*
+        * Mistyped Page Redirects
+        *
+        * If it doesn't meet any of the above requirements,
+        * only then will we consider it to be a mistyped page and redirect to the main page
+        */
+        else {
+          if (strcmp (url, "/") == 0) {        //This Redirect is also used to connect via seeds.ca/app/pool/controller.php
+                  WiServer.print ("<head><meta http-equiv='refresh' content='0; url=Eric.html' /></head>");
+                  return true;
+          }
+          if (strcmp (url, "/eric.html") == 0){
+                  WiServer.print ("<head><meta http-equiv='refresh' content='0; url=Eric.html' /></head>");
+                  return true;
+          }
+        }
+        
 	return false; //web page not servered
 
 }
