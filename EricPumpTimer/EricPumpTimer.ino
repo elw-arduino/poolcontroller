@@ -79,9 +79,6 @@ char PoolTempURL[] = {"in.php?t="};
 char PoolURL[] = {"/app/pool/"};
 
 const char PROGMEM htmlHeader[] = "<html><head><style>#unit {display:inline;};</style><meta content='yes' name='apple-mobile-web-app-capable' /><meta content='minimum-scale=1.0, width=device-width, maximum-scale=0.6667, user-scalable=no' name='viewport' /> <meta http-equiv=\"X-UA-Compatible\" content=\"IE=EmulateIE7\"/><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title>Pool Pump Timer</title></head><center><body><h2 onclick='location.reload'>Pool Pump Timer</h2>";
-const char PROGMEM htmlFooterBegin[] = "</body><footer>Project: ";
-const char PROGMEM htmlFooterMid[] = " Version ";
-const char PROGMEM htmlFooterEnd[] = "<form action='go.html' id='unit'><input class='Url' name='url' value='' type='hidden'><input type='hidden' name='unit' value='C'><input type='submit' value='°C' /></form><form action='go.html' id='unit'><input class='Url' name='url' value='' type='hidden'><input type='hidden' name='unit' value='F' /><input type='submit' value='°F' /></form><script>var u = location.href, s = u.split('/'), url; if(s[s.length - 1]) {url = s[s.length - 1];} else {url = s[s.length - 2];} var list = document.querySelectorAll('.Url'); var n; for (n = 0; n < list.length; ++n){list[n].value = url;}</script></footer></center></html>";
 const char PROGMEM htmlReturntopage[] = "<a style=\"color:black;text-decoration:none\" href=\"Eric.html\"><div style=\"border:1px solid black;width:100px\">Return to<br />Main Page</div></a>";
 //---------------------------------------------------------------------------
 // Wireless configuration parameters
@@ -448,13 +445,13 @@ const char num2char (byte num) {
 
 String sendHTMLfooter (){
 	
-	String s = htmlFooterBegin;
+	String s = "</body><footer>Project: ";
 	s += WHOAREWE;
-	s += htmlFooterMid;
+	s += " Version ";
 	s += VERSION;
 	s += " ";
 	s += extraInfo;
-	s += htmlFooterEnd;
+	s += "<form action='go.html' id='unit'><input class='Url' name='url' value='' type='hidden'><input type='hidden' name='unit' value='C'><input type='submit' value='°C' /></form><form action='go.html' id='unit'><input class='Url' name='url' value='' type='hidden'><input type='hidden' name='unit' value='F' /><input type='submit' value='°F' /></form><script>var u = location.href, s = u.split('/'), url; if(s[s.length - 1]) {url = s[s.length - 1];} else {url = s[s.length - 2];} var list = document.querySelectorAll('.Url'); var n; for (n = 0; n < list.length; ++n){list[n].value = url;}</script></footer></center></html>";
 	return s;
 	
 }
