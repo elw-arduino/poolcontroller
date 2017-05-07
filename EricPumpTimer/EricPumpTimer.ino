@@ -594,14 +594,14 @@ boolean sendHTMLpages (char *url) {
 		WiServer.print ("</form>");
                 WiServer.print ("<a href='http://seeds.ca/app/pool/scheduler.php'>Pool Scheduler Page<a/><br /><a href='http://seeds.ca/app/pool/edit.php'>Pool Edit Page<a/>");
                 WiServer.print ("<script type='text/javascript'>function doUpdateForm(){var sel = document.getElementById('Select');if( sel.value == '4' ) {var ctrl = document.getElementById('myDiv');ctrl.style.display = 'inline';var ctrl = document.getElementById('MySelect');ctrl.style.display = 'inline';ctrl.disabled=false;var ctrl = document.getElementById('myNumControl');ctrl.style.display = 'inline';ctrl.disabled=false;var ctrl = document.getElementById('myRadControl');ctrl.style.display = 'inline';ctrl.disabled=false;}}doUpdateForm()</script>");
-                WiServer.print (sendHTMLfooter);
+                WiServer.print (sendHTMLfooter());
 		return true; //web page servered
 	}
         if (strncmp (url, "/accept.html", 12) == 0) {
              WiServer.print_P (htmlHeader);
              WiServer.print ("<h2>Command Accepted</h2>");
 	     WiServer.print_P (htmlReturntopage);
-             WiServer.print (sendHTMLfooter);
+             WiServer.print (sendHTMLfooter());
 	     return true;
         }
         if (strncmp (url, "/setTime.html", 12) == 0) {
@@ -631,7 +631,7 @@ boolean sendHTMLpages (char *url) {
              WiServer.print ("Change Pump Start Time to:");
              WiServer.print ("<br /><input type=number name=Pumpstarttime size=1 required min=\"0\" max=\"23.5\" step=\"0.5\" /><br />24 hour time and only hours must be put in. (time format: HH)<br />");
              WiServer.print ("<input type=submit /></form></div>");
-             WiServer.print (sendHTMLfooter);
+             WiServer.print (sendHTMLfooter());
 	     return true;
         }
         /*
