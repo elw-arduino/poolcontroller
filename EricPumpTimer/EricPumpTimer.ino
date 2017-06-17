@@ -543,9 +543,9 @@ boolean sendHTMLpages (char *url) {
                 else {
 		  WiServer.print ("Pool Tempature is ");
 		  WiServer.print (PoolTemp.AveTemperature (), DEC);
-		  WiServer.print ("&deg;C<br />");
+		  WiServer.print ("&deg;C");
                 }
-		WiServer.print ("Pump will start running at <a style=\"color:red;text-decoration:none\" href=\"setTime.html\">");
+		WiServer.print (<br />"Pump will start running at <a style=\"color:red;text-decoration:none\" href=\"setTime.html\">");
 		WiServer.print (formatTime (PUMPStarttime));
 		WiServer.print ("</a><br />");
 		WiServer.print ("Pump will run for <a style=\"color:red;text-decoration:none\" href=\"setTime.html\">");
