@@ -446,12 +446,12 @@ const char num2char (byte num) {
 String sendHTMLfooter (){
 	
 	String s = "</body><footer>Project: ";
-	s += WHOAREWE;
-	s += " Version ";
-	s += VERSION;
-	s += " ";
-	s += extraInfo;
-	s += "<form action='go.html' id='unit'><input class='Url' name='url' value='' type='hidden'><input type='hidden' name='unit' value='C'><input type='submit' value='°C' /></form><form action='go.html' id='unit'><input class='Url' name='url' value='' type='hidden'><input type='hidden' name='unit' value='F' /><input type='submit' value='°F' /></form><script>var u = location.href, s = u.split('/'), url; if(s[s.length - 1]) {url = s[s.length - 1];} else {url = s[s.length - 2];} var list = document.querySelectorAll('.Url'); var n; for (n = 0; n < list.length; ++n){list[n].value = url;}</script></footer></center></html>";
+	s.concat(WHOAREWE);
+	s.concat(" Version ");
+	s.concat(VERSION);
+	s.concat(" ");
+	s.concat(extraInfo);
+	s.concat("<form action='go.html' id='unit'><input class='Url' name='url' value='' type='hidden'><input type='hidden' name='unit' value='C'><input type='submit' value='°C' /></form><form action='go.html' id='unit'><input class='Url' name='url' value='' type='hidden'><input type='hidden' name='unit' value='F' /><input type='submit' value='°F' /></form><script>var u = location.href, s = u.split('/'), url; if(s[s.length - 1]) {url = s[s.length - 1];} else {url = s[s.length - 2];} var list = document.querySelectorAll('.Url'); var n; for (n = 0; n < list.length; ++n){list[n].value = url;}</script></footer></center></html>");
 	return s;
 	
 }
