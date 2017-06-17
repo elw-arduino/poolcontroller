@@ -308,18 +308,12 @@ void loop () {
                   else
                     Blink_error = true;
         }
-        
-        if (!Blink)
-          digitalWrite (IndicatorLED, LOW);
-        else if (Blink)
-          digitalWrite (IndicatorLED, HIGH);
+	
+          digitalWrite (IndicatorLED, Blink ? HIGH : LOW);
 
            //Indicate if there is an Error with the probe
         if (WeHaveWiFi) {
-          if (!Blink_error)
-            digitalWrite (ErrorLED, LOW);
-          else if (Blink_error)
-            digitalWrite (ErrorLED, HIGH);
+            digitalWrite (ErrorLED, Blink ? HIGH : LOW);
           }
         
 	// Reset the WDT, must be done at least every 8s
