@@ -169,12 +169,14 @@ void loop () {
 	PoolTemp.buildAve ();
 
 	// send pool temperature to Bob's server
-	if (WeHaveWiFi && now() - PoolTempTimer > UpdateHowOften && !PoolTemp.isError()) {
-		PoolTempData = PoolURL;
-                PoolTempData += PoolTempURL;
-		PoolTempData += PoolTemp.AveTemperature ();
-		PoolTempUpdate.setURL ((char *) PoolTempData.c_str());
-		PoolTempUpdate.submit ();
+	if (WeHaveWiFi && now() - PoolTempTimer > UpdateHowOften) {
+		if (!PoolTemp.isError()){
+			PoolTempData = PoolURL;
+                	PoolTempData += PoolTempURL;
+			PoolTempData += PoolTemp.AveTemperature ();
+			PoolTempUpdate.setURL ((char *) PoolTempData.c_str());
+			PoolTempUpdate.submit ();
+		}
                 PoolSchedulerData = PoolURL;
                 PoolSchedulerData += "scheduler.php";
                 PoolSchedulerUpdate.setURL ((char *) PoolSchedulerData.c_str());
