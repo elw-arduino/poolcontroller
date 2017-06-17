@@ -8,7 +8,7 @@
 
 //Consts
 #define VERSION 1.4
-#define extraInfo "Epsilon"
+#define extraInfo "Vau*"
 #define WHOAREWE "Pool Pump Timer"
 #define Error404 "ERROR 404"
 #define RelayPin 48
