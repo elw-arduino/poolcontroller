@@ -474,36 +474,28 @@ boolean sendHTMLpages (char *url) {
 	if (WiServer.firstCall ()) {
 		if (strcmp (url, "/accept.html?override=normal") == 0) {
 			Override = normal;
-                        Serial.println ("Set Override to normal");
                 }
 		else if (strcmp (url, "/accept.html?override=ON") == 0) {
 			Override = ON;
 			startPump ();
-                        Serial.println ("Set Override to ON");
 		}
 		else if (strcmp (url, "/accept.html?override=OFF") == 0) {
 			Override = OFF;
 			stopPump ();
-                        Serial.println ("Set Override to OFF");
 		}
 		else if (strcmp (url, "/accept.html?override=Off+Till+Morning") == 0) {
 			Override = OffTillMorning;
 			stopPump ();
-                        Serial.println ("Set Override to Off Till Morning");
 		}
 		else if (strncmp (url, "/accept.html?Pumpstarttime", 26) == 0) {
 			String surl(url);
                         PUMPStarttime = surl.substring(27).toInt();
                         PUMPStarttime = PUMPStarttime * 3600;
-                        Serial.print ("Set PUMPStarttime to ");
-                        Serial.println (PUMPStarttime);
                         StoreTime(STOREDStarttime,PUMPStarttime);
        		}
 		else if (strncmp (url, "/accept.html?Pumpruntime", 24) == 0) {
 			String surl(url);
                         PUMPRunTime = surl.substring(25).toInt();
-                        Serial.print ("Set PUMPrunTime to ");
-                        Serial.println (PUMPRunTime);
                         StoreTime(STOREDtime,PUMPRunTime);
        		}
 		else if (strncmp (url, "/accept.html?override=Timer", 27) == 0) {
@@ -564,33 +556,28 @@ boolean sendHTMLpages (char *url) {
                 WiServer.print ("<select name=override size=1 id='Select' onchange='doUpdateForm(); style='display:inline'>");
                 switch (Override) {
                 case normal: 
-		WiServer.print ("<option selected />normal<option />ON<option />OFF<option />Off Till Morning<option />Timed");
+		WiServer.print (F("<option selected />normal<option />ON<option />OFF<option />Off Till Morning<option />Timed"));
                 break;
 		case ON:
-		WiServer.print ("<option />normal<option selected />ON<option />OFF<option />Off Till Morning<option />Timed");
+		WiServer.print (F("<option />normal<option selected />ON<option />OFF<option />Off Till Morning<option />Timed"));
                 break;
                 case OFF:
-		WiServer.print ("<option />normal<option />ON<option selected />OFF<option />Off Till Morning<option />Timed");
+		WiServer.print (F("<option />normal<option />ON<option selected />OFF<option />Off Till Morning<option />Timed"));
 		break;
                 case OffTillMorning:
-		WiServer.print ("<option />normal<option />ON<option />OFF<option selected />Off Till Morning<option />Timed");
+		WiServer.print (F("<option />normal<option />ON<option />OFF<option selected />Off Till Morning<option />Timed"));
 		break;
                 case Timed:
-		WiServer.print ("<option />normal<option />ON<option />OFF<option />Off Till Morning<option selected />Timed");
+		WiServer.print (F("<option />normal<option />ON<option />OFF<option />Off Till Morning<option selected />Timed"));
 		break;
 		}
-                WiServer.print ("</select><br /><fieldset style='border:1px none; display:none' id='timedInfo' disabled><input type='number' id='timeFormat' min='0.5' step='0.5' required/>");
-                WiServer.print ("<select name=timeFormat size=1 id='failSafe'onfocus='timeFormats();' onchange='doUpdateForm();' required><option selected />-- Select Time Format --<option id='sec' />Seconds<option id='min' />Minutes<option id='hour' />Hours</select><span id='myRadControl' style='display:none'>");
-                WiServer.print ("<br />Return To:<br /><input type='radio' name='return'value='Normal' required /> Normal (Adds to the normal time)<br />");
-                WiServer.print ("<input type='radio' name='return'value='Off Till Morning' required /> Off Till Morning (Overrides the normal time)</span></fieldset>");
-                WiServer.print ("<br /><input id='submit'type=submit />");
-                WiServer.print ("<script type='text/javascript'>");
-                //WiServer.print ("function timeFormats(){var rawSel = document.getElementById('timeFormat').value;var sel = parseInt(rawSel);if(rawSel != ''){document.getElementById('min').disabled = false;document.getElementById('hour').disabled = false;if(Math.round(sel) == parseFloat(rawSel)){");
-		//WiServer.print ("document.getElementById('sec').disabled = false;}else{document.getElementById('sec').disabled = true;}}else{document.getElementById('sec').disabled = true;document.getElementById('min').disabled = true;document.getElementById('hour').disabled = true;}}");
-                //WiServer.print ("function doUpdateForm(){var sel = document.getElementById('mySelect').value;if( sel == 'Timed' ) ");
-		//WiServer.print ("{document.getElementById('timedInfo').style.display = 'inline';document.getElementById('myRadControl').style.display = 'inline';document.getElementById('timedInfo').disabled = false;");
-		//WiServer.print ("if(document.getElementById('failSafe').value == '-- Select Time Format --' && sel == 'Timed'){document.getElementById('submit').disabled = true;}else{document.getElementById('submit').disabled = false;}}else {document.getElementById('timedInfo').style.display = 'none';");
-		//WiServer.print ("document.getElementById('myRadControl').style.display = 'none';document.getElementById('timedInfo').disabled = true;document.getElementById('submit').disabled = false;}}");
+                WiServer.print (F("</select><br /><fieldset style='border:1px none; display:none' id='timedInfo' disabled><input type='number' id='timeFormat' min='0.5' step='0.5' required/>"));
+                WiServer.print (F("<select name=timeFormat size=1 id='failSafe'onfocus='timeFormats();' onchange='doUpdateForm();' required><option selected />-- Select Time Format --<option id='sec' />Seconds<option id='min' />Minutes<option id='hour' />Hours</select><span id='myRadControl' style='display:none'>"));
+                WiServer.print (F("<br />Return To:<br /><input type='radio' name='return'value='Normal' required /> Normal (Adds to the normal time)<br />"));
+                WiServer.print (F("<input type='radio' name='return'value='Off Till Morning' required /> Off Till Morning (Overrides the normal time)</span></fieldset>"));
+                WiServer.print (F("<br /><input id='submit'type=submit />"));
+                WiServer.print (F("<script type='text/javascript'>"));
+                WiServer.print (F("function timeFormats(){var rawSel = document.getElementById('timeFormat').value;var sel = parseInt(rawSel);if(rawSel != ''){document.getElementById('min').disabled = false;document.getElementById('hour').disabled = false;if(Math.round(sel) == parseFloat(rawSel)){document.getElementById('sec').disabled = false;}else{document.getElementById('sec').disabled = true;}}else{document.getElementById('sec').disabled = true;document.getElementById('min').disabled = true;document.getElementById('hour').disabled = true;}}function doUpdateForm(){var sel = document.getElementById('mySelect').value;if( sel == 'Timed' ) {document.getElementById('timedInfo').style.display = 'inline';document.getElementById('myRadControl').style.display = 'inline';document.getElementById('timedInfo').disabled = false;if(document.getElementById('failSafe').value == '-- Select Time Format --' && sel == 'Timed'){document.getElementById('submit').disabled = true;}else{document.getElementById('submit').disabled = false;}}else {document.getElementById('timedInfo').style.display = 'none';document.getElementById('myRadControl').style.display = 'none';document.getElementById('timedInfo').disabled = true;document.getElementById('submit').disabled = false;}}"));
                 WiServer.print ("</script>");
 		WiServer.print ("</form>");
                 WiServer.print ("<a href='http://seeds.ca/app/pool/scheduler.php'>Pool Scheduler Page</a><br /><a href='http://seeds.ca/app/pool/edit.php'>Pool Edit Page</a>");
@@ -611,19 +598,19 @@ boolean sendHTMLpages (char *url) {
              WiServer.print ("<select name=Pumpruntime size=1>");
              switch (PUMPRunTime) {
                case 14400:
-                 WiServer.print ("<option selected value= \"14400\">4 Hours</option><option value= \"7200\">2 Hours</option><option value= \"3600\">1 Hour</option><option value= \"21600\">6 Hours</option>");
+                 WiServer.print (F("<option selected value= \"14400\">4 Hours</option><option value= \"7200\">2 Hours</option><option value= \"3600\">1 Hour</option><option value= \"21600\">6 Hours</option>"));
 		break;
                case 7200:
-                 WiServer.print ("<option value= \"14400\">4 Hours</option><option selected value= \"7200\">2 Hours</option><option value= \"3600\">1 Hour</option><option value= \"21600\">6 Hours</option>");
+                 WiServer.print (F("<option value= \"14400\">4 Hours</option><option selected value= \"7200\">2 Hours</option><option value= \"3600\">1 Hour</option><option value= \"21600\">6 Hours</option>"));
 		break;
                case 3600:
-                 WiServer.print ("<option value= \"14400\">4 Hours</option><option value= \"7200\">2 Hours</option><option selected value= \"3600\">1 Hour</option><option value= \"21600\">6 Hours</option>");
+                 WiServer.print (F("<option value= \"14400\">4 Hours</option><option value= \"7200\">2 Hours</option><option selected value= \"3600\">1 Hour</option><option value= \"21600\">6 Hours</option>");
 		break;
                case 21600:
-                 WiServer.print ("<option value= \"14400\">4 Hours</option><option value= \"7200\">2 Hours</option><option value= \"3600\">1 Hour</option><option selected value= \"21600\">6 Hours</option>");
+                 WiServer.print (F("<option value= \"14400\">4 Hours</option><option value= \"7200\">2 Hours</option><option value= \"3600\">1 Hour</option><option selected value= \"21600\">6 Hours</option>");
 		break;
                default:
-                 WiServer.print ("<option selected value= \"14400\">4 Hours</option><option value= \"7200\">2 Hours</option><option value= \"3600\">1 Hour</option><option value= \"21600\">6 Hours</option>");
+                 WiServer.print (F("<option selected value= \"14400\">4 Hours</option><option value= \"7200\">2 Hours</option><option value= \"3600\">1 Hour</option><option value= \"21600\">6 Hours</option>"));
 		break;
              }
              WiServer.print ("</select><br /><br /><input type=submit />");
