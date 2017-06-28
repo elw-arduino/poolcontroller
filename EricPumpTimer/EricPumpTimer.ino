@@ -454,7 +454,7 @@ String sendHTMLfooter (){
         s += "<input type='submit' value='°F' />";
         break;
         }
-        s += "</form><script>var u = location.href, s = u.split('/'), url; if(s[s.length - 1]) {url = s[s.length - 1]else {url = s[s.length - 2];} var list = document.querySelectorAll('.Url'); var n; for (n = 0; n < list.length; ++n){list[n].value = url</script></footer></center></html>";
+        s += "</form><script>var u = location.href, s = u.split('/'), url; if(s[s.length - 1]) {url = s[s.length - 1]}else {url = s[s.length - 2];} var list = document.querySelectorAll('.Url'); var n; for (n = 0; n < list.length; ++n){list[n].value = url}</script></footer></center></html>";
 	return (s);
 	
 }
