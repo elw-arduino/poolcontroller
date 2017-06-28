@@ -52,8 +52,7 @@ String PoolSchedulerData;
 unsigned int Returnto;
 unsigned long ExtraRunTime;
 unsigned long ExtraRanTime;
-//Boolean for holding unit. Inisalize here as deg C, in case its not set in EEPROM
-boolean Unit = false; // false for deg C, true for deg F
+int Unit;
 
 // Create Thermistor object
 Thermistor PoolTemp = Thermistor (0,30000,298.15,110000UL,3997, "Pool Temperature probe");
@@ -68,7 +67,7 @@ const char num2char (byte);
 boolean sendHTMLpages (char *);
 int cmdToInt (String cmd);
 String overrideMode (int mode);
-void updateUnit (int newUnit, boolean ReadOnly);
+void updateUnit (int newUnit);
 String sendHTMLfooter ();
 
 // Set up for sending pool tempature to Bob's server
@@ -78,7 +77,7 @@ GETrequest PoolSchedulerUpdate (PoolTemp_ip, 80, "seeds.ca", "");
 char PoolTempURL[] = {"in.php?t="};
 char PoolURL[] = {"/app/pool/"};
 
-const char PROGMEM htmlHeader[] = "<html><head><style>#unit {display:inline;};</style><meta content='yes' name='apple-mobile-web-app-capable' /><meta content='minimum-scale=1.0, width=device-width, maximum-scale=0.6667, user-scalable=no' name='viewport' /> <meta http-equiv=\"X-UA-Compatible\" content=\"IE=EmulateIE7\"/><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title>Pool Pump Timer</title></head><center><body><h2 onclick='location.reload'>Pool Pump Timer</h2>";
+const char PROGMEM htmlHeader[] = "<html><head><style>#unit {display:inline;};</style><meta content='yes' name='apple-mobile-web-app-capable' /><meta content='minimum-scale=1.0, width=device-width, maximum-scale=0.6667, user-scalable=no' name='viewport' /> <meta http-equiv=\"X-UA-Compatible\" content=\"IE=EmulateIE7\"/><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title>Pool Pump Timer</title></head><center><body><h2 onclick='location.reload()'>Pool Pump Timer</h2>";
 const char PROGMEM htmlReturntopage[] = "<a style=\"color:black;text-decoration:none\" href=\"Eric.html\"><div style=\"border:1px solid black;width:100px\">Return to<br />Main Page</div></a>";
 //---------------------------------------------------------------------------
 // Wireless configuration parameters
@@ -123,7 +122,7 @@ void setup () {
         ExtraRunTime = ReadStoredTime(STOREDExtraruntime);
         ExtraRanTime = ReadStoredTime(STOREDExtratime);
         Returnto = EEPROM.read(STOREDReturnTo);
-        updateUnit(0, true);
+        Unit = EEPROM.read(STOREDUnit);
         
 	// setup a watch dog timer.
 	wdt_enable (WDTO_8S);
@@ -349,25 +348,15 @@ String overrideMode(int mode)
 *
 *      Called to Update the Unit of display for the Web Portal Interface
 *      Check if its a valid number
-*      Get the current unit from the EEPROM
 *      Check if we are in Read Only mode
-*      If we aren't in readOnly mode then check if Unit has changed
 *      If its changed then update the EEPROM
-*      Pass the Unit to rest of Program regardless of mode
 */
-void updateUnit(int newUnit, boolean readOnly) {
+void updateUnit(int newUnit) {
   if (newUnit == 0 || newUnit == 1){
-    int currentUnit = EEPROM.read(STOREDUnit);
-    if(!readOnly){
-      if (currentUnit != newUnit){
-        currentUnit = newUnit;
-        EEPROM.write(STOREDUnit, currentUnit);
+      if (Unit != newUnit){
+        Unit = newUnit;
+        EEPROM.write(STOREDUnit, Unit);
       }
-    }
-    if (currentUnit == 1) // Check if using deg F
-      Unit = true; // Pass to boolean representation
-    else if (currentUnit == 0) // Check if using deg C
-      Unit = false; // Pass to boolean representation
   }
 }
 
@@ -447,7 +436,25 @@ String sendHTMLfooter (){
 	s += String(VERSION,1);
 	s += " ";
 	s += extraInfo;
-	s += "<form action='go.html' id='unit'><input class='Url' name='url' value='' type='hidden'><input type='hidden' name='unit' value='C'><input type='submit' value='°C' /></form><form action='go.html' id='unit'><input class='Url' name='url' value='' type='hidden'><input type='hidden' name='unit' value='F' /><input type='submit' value='°F' /></form><script>var u = location.href, s = u.split('/'), url; if(s[s.length - 1]) {url = s[s.length - 1];} else {url = s[s.length - 2];} var list = document.querySelectorAll('.Url'); var n; for (n = 0; n < list.length; ++n){list[n].value = url;}</script></footer></center></html>";
+        s += "<form action='go.html' id='unit'><input class='Url' name='url' value='' type='hidden'><input type='hidden' name='unit' value='C'>";
+	switch (Unit){
+        case 1:
+        s += "<input type='submit' value='°C'/>";
+        break;
+        case 0:
+        s += "<input type='submit' value='°C' disabled/>";
+        break;
+        }
+        s += "</form><form action='go.html' id='unit'><input class='Url' name='url' value='' type='hidden'><input type='hidden' name='unit' value='F' />";
+        switch (Unit){
+        case 1:
+        s += "<input type='submit' value='°F' disabled />";
+        break;
+        case 0:
+        s += "<input type='submit' value='°F' />";
+        break;
+        }
+        s += "</form><script>var u = location.href, s = u.split('/'), url; if(s[s.length - 1]) {url = s[s.length - 1]else {url = s[s.length - 2];} var list = document.querySelectorAll('.Url'); var n; for (n = 0; n < list.length; ++n){list[n].value = url</script></footer></center></html>";
 	return (s);
 	
 }
@@ -578,22 +585,15 @@ boolean sendHTMLpages (char *url) {
                 WiServer.print ("<input type='radio' name='return'value='Off Till Morning' required /> Off Till Morning (Overrides the normal time)</span></fieldset>");
                 WiServer.print ("<br /><input id='submit'type=submit />");
                 WiServer.print ("<script type='text/javascript'>");
-                WiServer.print ("function timeFormats(){var rawSel = document.getElementById('timeFormat').value;var sel = parseInt(rawSel);if(rawSel != ''){document.getElementById('min').disabled = false;document.getElementById('hour').disabled = false;if(Math.round(sel) == parseFloat(rawSel)){");
-		WiServer.print ("document.getElementById('sec').disabled = false;}else{document.getElementById('sec').disabled = true;}}else{document.getElementById('sec').disabled = true;document.getElementById('min').disabled = true;document.getElementById('hour').disabled = true;}}");
-                WiServer.print ("function doUpdateForm(){var sel = document.getElementById('mySelect').value;if( sel == 'Timed' ) ");
-		WiServer.print ("{document.getElementById('timedInfo').style.display = 'inline';document.getElementById('myRadControl').style.display = 'inline';document.getElementById('timedInfo').disabled = false;");
-		WiServer.print ("if(document.getElementById('failSafe').value == '-- Select Time Format --' && sel == 'Timed'){document.getElementById('submit').disabled = true;}else{document.getElementById('submit').disabled = false;}}else {document.getElementById('timedInfo').style.display = 'none';");
-		WiServer.print ("document.getElementById('myRadControl').style.display = 'none';document.getElementById('timedInfo').disabled = true;document.getElementById('submit').disabled = false;}}");
+                //WiServer.print ("function timeFormats(){var rawSel = document.getElementById('timeFormat').value;var sel = parseInt(rawSel);if(rawSel != ''){document.getElementById('min').disabled = false;document.getElementById('hour').disabled = false;if(Math.round(sel) == parseFloat(rawSel)){");
+		//WiServer.print ("document.getElementById('sec').disabled = false;}else{document.getElementById('sec').disabled = true;}}else{document.getElementById('sec').disabled = true;document.getElementById('min').disabled = true;document.getElementById('hour').disabled = true;}}");
+                //WiServer.print ("function doUpdateForm(){var sel = document.getElementById('mySelect').value;if( sel == 'Timed' ) ");
+		//WiServer.print ("{document.getElementById('timedInfo').style.display = 'inline';document.getElementById('myRadControl').style.display = 'inline';document.getElementById('timedInfo').disabled = false;");
+		//WiServer.print ("if(document.getElementById('failSafe').value == '-- Select Time Format --' && sel == 'Timed'){document.getElementById('submit').disabled = true;}else{document.getElementById('submit').disabled = false;}}else {document.getElementById('timedInfo').style.display = 'none';");
+		//WiServer.print ("document.getElementById('myRadControl').style.display = 'none';document.getElementById('timedInfo').disabled = true;document.getElementById('submit').disabled = false;}}");
                 WiServer.print ("</script>");
-                WiServer.print ("<br />Project: ");
-                WiServer.print (WHOAREWE);
-		WiServer.print (" Version ");
-		WiServer.print (VERSION, 1);
-                WiServer.print (" ");
-                WiServer.print (extraInfo);
 		WiServer.print ("</form>");
-                WiServer.print ("<a href='http://seeds.ca/app/pool/scheduler.php'>Pool Scheduler Page<a/><br /><a href='http://seeds.ca/app/pool/edit.php'>Pool Edit Page<a/>");
-                WiServer.print ("<script type='text/javascript'>function doUpdateForm(){var sel = document.getElementById('Select');if( sel.value == '4' ) {var ctrl = document.getElementById('myDiv');ctrl.style.display = 'inline';var ctrl = document.getElementById('MySelect');ctrl.style.display = 'inline';ctrl.disabled=false;var ctrl = document.getElementById('myNumControl');ctrl.style.display = 'inline';ctrl.disabled=false;var ctrl = document.getElementById('myRadControl');ctrl.style.display = 'inline';ctrl.disabled=false;}}doUpdateForm()</script>");
+                WiServer.print ("<a href='http://seeds.ca/app/pool/scheduler.php'>Pool Scheduler Page</a><br /><a href='http://seeds.ca/app/pool/edit.php'>Pool Edit Page</a>");
                 WiServer.print (sendHTMLfooter());
 		return true; //web page servered
 	}
