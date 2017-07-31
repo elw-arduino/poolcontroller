@@ -168,7 +168,7 @@ void loop () {
 	PoolTemp.buildAve ();
 
 	// send pool temperature to Bob's server
-	if (WeHaveWiFi && now() - PoolTempTimer > UpdateHowOften) {
+	/*if (WeHaveWiFi && now() - PoolTempTimer > UpdateHowOften) {
 		if (!PoolTemp.isError()){
 			PoolTempData = PoolURL;
                 	PoolTempData += PoolTempURL;
@@ -181,7 +181,7 @@ void loop () {
                 PoolSchedulerUpdate.setURL ((char *) PoolSchedulerData.c_str());
                 PoolSchedulerUpdate.submit ();
  		PoolTempTimer = now ();
-	}
+	}*/
 
       if (WeHaveWiFi) {
       if (!cmdactive) {
@@ -471,7 +471,7 @@ String sendHTMLfooter (){
  */
 boolean sendHTMLpages (char *url) {
 	// Block of code to be executed only once per page
-	if (WiServer.firstCall ()) {
+	/*if (WiServer.firstCall ()) {
 		if (strcmp (url, "/accept.html?override=normal") == 0) {
 			Override = normal;
                 }
@@ -528,7 +528,7 @@ boolean sendHTMLpages (char *url) {
          /*
 	 *	Main HTML page
 	 */
-	if (strncmp (url, "/Eric.html", 10) == 0) {
+	/*if (strncmp (url, "/Eric.html", 10) == 0) {
 		WiServer.print_P (htmlHeader);
                 WiServer.print ("Pool Timer Time: ");
                 WiServer.print (formatTime (elapsedSecsToday (now ())));
@@ -627,7 +627,7 @@ boolean sendHTMLpages (char *url) {
         * If it doesn't meet any of the above requirements,
         * only then will we consider it to be a mistyped page and redirect to the main page
         */
-        else {
+        /*else {
           if (strcmp (url, "/") == 0) {        //This Redirect is also used to connect via seeds.ca/app/pool/controller.php
                   WiServer.print ("<head><meta http-equiv='refresh' content='0; url=Eric.html' /></head>");
                   return true;
@@ -637,7 +637,7 @@ boolean sendHTMLpages (char *url) {
                   return true;
           }
         }
-        
+        */
 	return false; //web page not servered
 
 }
