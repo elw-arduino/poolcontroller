@@ -7,13 +7,14 @@
 #include <avr/wdt.h>
 
 //Consts
-#define VERSION 1.5
-#define extraInfo "Alpha"
+#define VERSION 1.4
+#define extraInfo "Vau*"
 #define WHOAREWE "Pool Pump Timer"
 #define Error404 "ERROR 404"
 #define RelayPin 48
 #define IndicatorLED 9
 #define ErrorLED 8
+#define UpdateHowOften 60 /* send Temp data to Bob's server every 60sec */
 #define unknown 0xFFF9
 #define ONE_SECOND 1UL
 #define normal 0x00
@@ -47,6 +48,7 @@ boolean Blink = false;
 boolean Blink_error = false;
 boolean Startup = true;
 boolean cmdactive = false;
+String PoolSchedulerData;
 unsigned int Returnto;
 unsigned long ExtraRunTime;
 unsigned long ExtraRanTime;
@@ -68,10 +70,12 @@ String overrideMode (int mode);
 void updateUnit (int newUnit);
 String sendHTMLfooter ();
 
-// Set up for sending pool tempature to Eric's ESP8266 Relay
-unsigned char PoolTemp_ip[] = {192,168,1,91}; // relay
-GETrequest PoolTempUpdate (PoolTemp_ip, 80, "192.168.1.91", "");
-char PoolTempURL[] = {"in?t="};
+// Set up for sending pool tempature to Bob's server
+unsigned char PoolTemp_ip[] = {104,200,28,125}; // seeds.ca
+GETrequest PoolTempUpdate (PoolTemp_ip, 80, "seeds.ca", "");
+GETrequest PoolSchedulerUpdate (PoolTemp_ip, 80, "seeds.ca", "");
+char PoolTempURL[] = {"in.php?t="};
+char PoolURL[] = {"/app/pool/"};
 
 const char PROGMEM htmlHeader[] = "<html><head><style>#unit {display:inline;};</style><meta content='yes' name='apple-mobile-web-app-capable' /><meta content='minimum-scale=1.0, width=device-width, maximum-scale=0.6667, user-scalable=no' name='viewport' /> <meta http-equiv=\"X-UA-Compatible\" content=\"IE=EmulateIE7\"/><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title>Pool Pump Timer</title></head><center><body><h2 onclick='location.reload()'>Pool Pump Timer</h2>";
 const char PROGMEM htmlReturntopage[] = "<a style=\"color:black;text-decoration:none\" href=\"Eric.html\"><div style=\"border:1px solid black;width:100px\">Return to<br />Main Page</div></a>";
@@ -163,13 +167,21 @@ void loop () {
 	// calculate pool temperature
 	PoolTemp.buildAve ();
 
-	// send pool temperature to the relay
-	if (!PoolTemp.isError()){
-          PoolTempData += PoolTempURL;
-	  PoolTempData += PoolTemp.AveTemperature ();
-	  PoolTempUpdate.setURL ((char *) PoolTempData.c_str());
-	  PoolTempUpdate.submit ();
-	}
+	// send pool temperature to Bob's server
+	/*if (WeHaveWiFi && now() - PoolTempTimer > UpdateHowOften) {
+		if (!PoolTemp.isError()){
+			PoolTempData = PoolURL;
+                	PoolTempData += PoolTempURL;
+			PoolTempData += PoolTemp.AveTemperature ();
+			PoolTempUpdate.setURL ((char *) PoolTempData.c_str());
+			PoolTempUpdate.submit ();
+		}
+                PoolSchedulerData = PoolURL;
+                PoolSchedulerData += "scheduler.php";
+                PoolSchedulerUpdate.setURL ((char *) PoolSchedulerData.c_str());
+                PoolSchedulerUpdate.submit ();
+ 		PoolTempTimer = now ();
+	}*/
 
       if (WeHaveWiFi) {
       if (!cmdactive) {
@@ -459,7 +471,7 @@ String sendHTMLfooter (){
  */
 boolean sendHTMLpages (char *url) {
 	// Block of code to be executed only once per page
-	if (WiServer.firstCall ()) {
+	/*if (WiServer.firstCall ()) {
 		if (strcmp (url, "/accept.html?override=normal") == 0) {
 			Override = normal;
                 }
@@ -516,7 +528,7 @@ boolean sendHTMLpages (char *url) {
          /*
 	 *	Main HTML page
 	 */
-	if (strncmp (url, "/Eric.html", 10) == 0) {
+	/*if (strncmp (url, "/Eric.html", 10) == 0) {
 		WiServer.print_P (htmlHeader);
                 WiServer.print ("Pool Timer Time: ");
                 WiServer.print (formatTime (elapsedSecsToday (now ())));
@@ -615,7 +627,7 @@ boolean sendHTMLpages (char *url) {
         * If it doesn't meet any of the above requirements,
         * only then will we consider it to be a mistyped page and redirect to the main page
         */
-        else {
+        /*else {
           if (strcmp (url, "/") == 0) {        //This Redirect is also used to connect via seeds.ca/app/pool/controller.php
                   WiServer.print ("<head><meta http-equiv='refresh' content='0; url=Eric.html' /></head>");
                   return true;
@@ -625,7 +637,7 @@ boolean sendHTMLpages (char *url) {
                   return true;
           }
         }
-        
+        */
 	return false; //web page not servered
 
 }
