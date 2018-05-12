@@ -8,7 +8,7 @@
 
 //Consts
 #define VERSION 1.5
-#define extraInfo "Alpha"
+#define extraInfo "Beta"
 #define WHOAREWE "Pool Pump Timer"
 #define Error404 "ERROR 404"
 #define RelayPin 48
@@ -164,11 +164,13 @@ void loop () {
 	PoolTemp.buildAve ();
 
 	// send pool temperature to the relay
-	if (!PoolTemp.isError()){
-          PoolTempData += PoolTempURL;
-	  PoolTempData += PoolTemp.AveTemperature ();
-	  PoolTempUpdate.setURL ((char *) PoolTempData.c_str());
-	  PoolTempUpdate.submit ();
+	if(WeHaveWiFi){
+		if (!PoolTemp.isError()){
+		  PoolTempData += PoolTempURL;
+		  PoolTempData += PoolTemp.AveTemperature ();
+		  PoolTempUpdate.setURL ((char *) PoolTempData.c_str());
+		  PoolTempUpdate.submit ();
+		}
 	}
 
       if (WeHaveWiFi) {
