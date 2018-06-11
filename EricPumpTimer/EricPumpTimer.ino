@@ -71,7 +71,7 @@ String sendHTMLfooter ();
 // Set up for sending pool tempature to Eric's ESP8266 Relay
 unsigned char PoolTemp_ip[] = {192,168,1,91}; // relay
 GETrequest PoolTempUpdate (PoolTemp_ip, 80, "192.168.1.91", "");
-char PoolTempURL[] = {"in?t="};
+char PoolTempURL[] = {"/in?t="};
 
 const char PROGMEM htmlHeader[] = "<html><head><style>#unit {display:inline;};</style><meta content='yes' name='apple-mobile-web-app-capable' /><meta content='minimum-scale=1.0, width=device-width, maximum-scale=0.6667, user-scalable=no' name='viewport' /> <meta http-equiv=\"X-UA-Compatible\" content=\"IE=EmulateIE7\"/><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title>Pool Pump Timer</title></head><center><body><h2 onclick='location.reload()'>Pool Pump Timer</h2>";
 const char PROGMEM htmlReturntopage[] = "<a style=\"color:black;text-decoration:none\" href=\"Eric.html\"><div style=\"border:1px solid black;width:100px\">Return to<br />Main Page</div></a>";
