@@ -148,7 +148,6 @@ void setup () {
 }
 
 void loop () {
-	static unsigned long PoolTempTimer = 0;
 	static unsigned long delta_t = 0;
 	static unsigned long error_t = 0;
         String str;
