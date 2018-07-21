@@ -14,6 +14,7 @@
 #define RelayPin 48
 #define IndicatorLED 9
 #define ErrorLED 8
+#define UpdateHowOften 60
 #define unknown 0xFFF9
 #define ONE_SECOND 1UL
 #define normal 0x00
@@ -164,13 +165,14 @@ void loop () {
 	PoolTemp.buildAve ();
 
 	// send pool temperature to the relay
-	if(WeHaveWiFi){
-		if (!PoolTemp.isError()){
-		  PoolTempData += PoolTempURL;
-		  PoolTempData += PoolTemp.AveTemperature ();
-		  PoolTempUpdate.setURL ((char *) PoolTempData.c_str());
-		  PoolTempUpdate.submit ();
-		}
+	if (WeHaveWiFi && now() - PoolTempTimer > UpdateHowOften) {
+                Serial.println("Connecting to Relay");
+		PoolTempData = PoolTempURL;
+		PoolTempData += PoolTemp.AveTemperature ();
+		PoolTempUpdate.setURL ((char *) PoolTempData.c_str());
+		PoolTempUpdate.submit ();
+		PoolTempTimer = now ();
+                Serial.println("Disconnecting from Relay");
 	}
 
       if (WeHaveWiFi) {
