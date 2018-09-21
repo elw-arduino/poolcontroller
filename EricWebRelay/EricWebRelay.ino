@@ -42,8 +42,15 @@ void mainPage(){
   s += "<form action='/in'>";
   s += "<label>Update Pool Temperature (&degC):</label>";
   s += "<input type='number' min='-32768' max='32767' name='t' required /><br />";
-  s += "<input type='submit' />";
+  s += "<input type='submit' /></form>";
+  s += "<a href='/controller'>Acess Controller</a>";
   server.send(200, "text/html", s);
+}
+
+void controller() {
+  String screen = (server.hasArg("screen")?server.arg("screen"):"Eric.html");
+  
+  server.send(200, "text/html", "Accessing Controller Page:" + screen);
 }
 
 void setup() {
@@ -51,7 +58,7 @@ void setup() {
   Serial.begin(9600);
   Serial.println();
 
-  WiFi.mode(WIFI_STA);
+  WiFi.mode(WIFI_AP_STA);
   Serial.print("Connecting to " + String(ssid));
   WiFi.config(staticIP,gateway,subnet);
   WiFi.hostname("PoolControlerRelay");
@@ -64,12 +71,14 @@ void setup() {
   Serial.println("Connected");
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
+  WiFi.softAPConfig(staticIp,staticIp, subnet);
+  WiFi.softAP("PoolNet","68Dunbar");
   server.on("/in", in);
   server.on("/", mainPage);
+  server.on("/controller", controller);
   server.begin();
   Serial.println("HTTP server started");
   seedsTimer.attach(60,seedsRequests);
-
 }
 
 void loop() {
