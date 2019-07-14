@@ -8,7 +8,7 @@
 
 //Consts
 #define VERSION 1.5
-#define extraInfo "Beta"
+#define extraInfo "Charlie"
 #define WHOAREWE "Pool Pump Timer"
 #define Error404 "ERROR 404"
 #define RelayPin 48
@@ -70,8 +70,8 @@ void updateUnit (int newUnit);
 String sendHTMLfooter ();
 
 // Set up for sending pool tempature to Eric's ESP8266 Relay
-unsigned char PoolTemp_ip[] = {192,168,1,91}; // relay
-GETrequest PoolTempUpdate (PoolTemp_ip, 80, "poolRelay", "");
+unsigned char PoolTemp_ip[] = {192,168,2,163}; // relay
+GETrequest PoolTempUpdate (PoolTemp_ip, 80, "PoolControlerRelay", "");
 char PoolTempURL[] = {"/in?t="};
 
 const char PROGMEM htmlHeader[] = "<html><head><style>#unit {display:inline;};</style><meta content='yes' name='apple-mobile-web-app-capable' /><meta content='minimum-scale=1.0, width=device-width, maximum-scale=0.6667, user-scalable=no' name='viewport' /> <meta http-equiv=\"X-UA-Compatible\" content=\"IE=EmulateIE7\"/><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title>Pool Pump Timer</title></head><center><body><h2 onclick='location.reload()'>Pool Pump Timer</h2>";
@@ -80,10 +80,10 @@ const char PROGMEM htmlReturntopage[] = "<a style=\"color:black;text-decoration:
 // Wireless configuration parameters
 #define WIRELESS_MODE_INFRA 1
 unsigned char local_ip[] = {192,168,1,90};	// IP address of WiShield
-unsigned char gateway_ip[] = {192,168,1,254};	// router or gateway IP address
-const char PROGMEM ssid[] = {"PACE629"};	// max 32 bytes
+unsigned char gateway_ip[] = {192,168,2,1};	// router or gateway IP address
+const char PROGMEM ssid[] = {"BELL514"};	// max 32 bytes
 // WPA/WPA2 passphrase
-const char PROGMEM security_passphrase[] = {"0282735560"};	// max 64 characters
+const char PROGMEM security_passphrase[] = {"59716674"};	// max 64 characters
 unsigned char subnet_mask[] = {255,255,255,0};	// subnet mask for the local network
 
 unsigned char security_type = 3;	// 0 - open; 1 - WEP; 2 - WPA; 3 - WPA2
