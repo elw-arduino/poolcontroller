@@ -7,8 +7,8 @@
 #include <avr/wdt.h>
 
 //Consts
-#define VERSION 1.5
-#define extraInfo "Charlie"
+#define VERSION 1.7
+#define extraInfo "Beta"
 #define WHOAREWE "Pool Pump Timer"
 #define Error404 "ERROR 404"
 #define RelayPin 48
@@ -22,6 +22,7 @@
 #define OFF 0x02
 #define OffTillMorning 0x03
 #define Timed 0x04
+#define Legacy 0x05
 #define STOREDSTATE 0x20
 #define STOREDruntime 0x21  // Needs 4 bytes next avalible byte is 25
 #define STOREDtime 0x25  // Needs 4 bytes next avalible byte is 29
@@ -29,13 +30,12 @@
 #define STOREDExtraruntime 0x2D // Needs 4 bytes next avalible byte is 31
 #define STOREDExtratime 0x31 // Needs 4 bytes next avalible byte is 36
 #define STOREDReturnTo 0x36
-#define STOREDUnit 0x37
 
 //Macros
 #define ReadStoredTime(Adr) (unsigned long)(((unsigned long)EEPROM.read(Adr)<<24)+((unsigned long)EEPROM.read(Adr+1)<<16)+((unsigned long)EEPROM.read(Adr+2)<<8)+(unsigned long)EEPROM.read(Adr+3))
 #define StoreTime(Adr,Num) EEPROM.write(Adr,(byte)((Num&0xFF000000)>>24));EEPROM.write(Adr+1,(byte)((Num&0x00FF00)>>16));EEPROM.write(Adr+2,(byte)((Num&0x0000FF00)>>8));EEPROM.write(Adr+3,(byte)(Num&0x000000FF))
 
-// Globel vareables
+// Global vareables
 unsigned int Days = 0;
 unsigned long PUMPStarttime;
 unsigned long PUMPRunTime;
@@ -51,7 +51,7 @@ boolean cmdactive = false;
 unsigned int Returnto;
 unsigned long ExtraRunTime;
 unsigned long ExtraRanTime;
-int Unit;
+unsigned long lastChange = 0;
 
 // Create Thermistor object
 Thermistor PoolTemp = Thermistor (0,30000,298.15,110000UL,3997, "Pool Temperature probe");
@@ -66,25 +66,23 @@ const char num2char (byte);
 boolean sendHTMLpages (char *);
 int cmdToInt (String cmd);
 String overrideMode (int mode);
-void updateUnit (int newUnit);
-String sendHTMLfooter ();
 
 // Set up for sending pool tempature to Eric's ESP8266 Relay
-unsigned char PoolTemp_ip[] = {192,168,2,163}; // relay
+unsigned char PoolTemp_ip[] = {192,168,1,91}; // relay
 GETrequest PoolTempUpdate (PoolTemp_ip, 80, "PoolControlerRelay", "");
-char PoolTempURL[] = {"/in?t="};
+char PoolTempURL[] = {"/in?"};
 
-const char PROGMEM htmlHeader[] = "<html><head><style>#unit {display:inline;};</style><meta content='yes' name='apple-mobile-web-app-capable' /><meta content='minimum-scale=1.0, width=device-width, maximum-scale=0.6667, user-scalable=no' name='viewport' /> <meta http-equiv=\"X-UA-Compatible\" content=\"IE=EmulateIE7\"/><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title>Pool Pump Timer</title></head><center><body><h2 onclick='location.reload()'>Pool Pump Timer</h2>";
+const char PROGMEM htmlHeader[] = "<html><head><meta content='yes' name='apple-mobile-web-app-capable' /><meta content='minimum-scale=1.0, width=device-width, maximum-scale=0.6667, user-scalable=no' name='viewport' /> <meta http-equiv=\"X-UA-Compatible\" content=\"IE=EmulateIE7\"/><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title>Pool Pump Timer</title></head><center><body><h2 onclick='location.reload()'>Pool Pump Timer</h2>";
 const char PROGMEM htmlReturntopage[] = "<a style=\"color:black;text-decoration:none\" href=\"Eric.html\"><div style=\"border:1px solid black;width:100px\">Return to<br />Main Page</div></a>";
 //---------------------------------------------------------------------------
 // Wireless configuration parameters
 #define WIRELESS_MODE_INFRA 1
 unsigned char local_ip[] = {192,168,1,90};	// IP address of WiShield
-unsigned char gateway_ip[] = {192,168,2,1};	// router or gateway IP address
-const char PROGMEM ssid[] = {"BELL514"};	// max 32 bytes
+unsigned char gateway_ip[] = {192,168,1,91};	// router or gateway IP address
+const char PROGMEM ssid[] = {"PoolNet"};	// max 32 bytes
 // WPA/WPA2 passphrase
-const char PROGMEM security_passphrase[] = {"59716674"};	// max 64 characters
-unsigned char subnet_mask[] = {255,255,255,0};	// subnet mask for the local network
+const char PROGMEM security_passphrase[] = {"68Dunbar"};	// max 64 characters
+unsigned char subnet_mask[] = {255,255,255,255};	// subnet mask for the local network
 
 unsigned char security_type = 3;	// 0 - open; 1 - WEP; 2 - WPA; 3 - WPA2
 
@@ -109,17 +107,16 @@ void setup () {
 	Serial.print (WHOAREWE);
 	Serial.print (" Version ");
 	Serial.print (VERSION, 1);
-        Serial.print (" ");
-        Serial.println (extraInfo);
+  Serial.print (" ");
+  Serial.println (extraInfo);
 
-        PUMPStarttime = ReadStoredTime(STOREDStarttime);
-        PUMPRunTime = ReadStoredTime(STOREDtime);
-        timePumpOnToday = ReadStoredTime(STOREDruntime);
-        Override = EEPROM.read(STOREDSTATE);
-        ExtraRunTime = ReadStoredTime(STOREDExtraruntime);
-        ExtraRanTime = ReadStoredTime(STOREDExtratime);
-        Returnto = EEPROM.read(STOREDReturnTo);
-        Unit = EEPROM.read(STOREDUnit);
+  PUMPStarttime = ReadStoredTime(STOREDStarttime);
+  PUMPRunTime = ReadStoredTime(STOREDtime);
+  timePumpOnToday = ReadStoredTime(STOREDruntime);
+  Override = EEPROM.read(STOREDSTATE);
+  ExtraRunTime = ReadStoredTime(STOREDExtraruntime);
+  ExtraRanTime = ReadStoredTime(STOREDExtratime);
+  Returnto = EEPROM.read(STOREDReturnTo);
         
 	// setup a watch dog timer.
 	wdt_enable (WDTO_8S);
@@ -140,11 +137,11 @@ void setup () {
 	// keep track of days
 	Days = elapsedDays (now());
 
-        StoreTime(STOREDruntime, 0);
-        EEPROM.write(STOREDSTATE, normal);
-        StoreTime(STOREDExtraruntime, 0);
-        StoreTime(STOREDExtratime, 0);
-        EEPROM.write(STOREDReturnTo, 0);
+  StoreTime(STOREDruntime, 0);
+  EEPROM.write(STOREDSTATE, normal);
+  StoreTime(STOREDExtraruntime, 0);
+  StoreTime(STOREDExtratime, 0);
+  EEPROM.write(STOREDReturnTo, 0);
 
 }
 
@@ -152,7 +149,7 @@ void loop () {
 	static unsigned long PoolTempTimer = 0;
 	static unsigned long delta_t = 0;
 	static unsigned long error_t = 0;
-        String str;
+  String str;
 
 	// run web server tasks
 	WeHaveWiFi = WiServer.server_task ();
@@ -168,19 +165,31 @@ void loop () {
 	if (WeHaveWiFi && now() - PoolTempTimer > UpdateHowOften) {
                 Serial.println("Connecting to Relay");
 		PoolTempData = PoolTempURL;
-		PoolTempData += PoolTemp.AveTemperature ();
+    PoolTempData += "override=";
+    PoolTempData += Override;
+    PoolTempData += "&pump=";
+    PoolTempData += PumpisOn;
+    PoolTempData += "&start=";
+    PoolTempData += PUMPStarttime;
+    PoolTempData += "&run=";
+    PoolTempData += PUMPRunTime;
+    PoolTempData += "&ran=";
+    PoolTempData += timePumpOnToday;
+    if(PoolTemp.isError()){
+      PoolTempData += "&t=";
+      PoolTempData += PoolTemp.AveTemperature();
+    }
 		PoolTempUpdate.setURL ((char *) PoolTempData.c_str());
 		PoolTempUpdate.submit ();
 		PoolTempTimer = now ();
                 Serial.println("Disconnecting from Relay");
 	}
-
-      if (WeHaveWiFi) {
+ 
       if (!cmdactive) {
         Serial.println ("Command Terminal Activated");
         cmdactive = true;}
         if (Serial.available ()) {	// See if string is avalible
-	str = Serial.readStringUntil ('\n');
+	        str = Serial.readStringUntil ('\n');
         if (str.startsWith("setPumpTime")) {
           String str2 = str.substring(12);
           Serial.print ("Set timePumpOnToday to: ");
@@ -273,7 +282,7 @@ void loop () {
 
 	// see if its time to start the pump,
 	// But only if we are Override normal
-	if (Override == normal) {
+	if (Override == Legacy) {
 		if (elapsedSecsToday (now ()) >= PUMPStarttime &&
 		 timePumpOnToday < PUMPRunTime)
 			startPump ();
@@ -290,6 +299,14 @@ void loop () {
                         Override = Returnto;
                 }
 	}
+  else if (Override == normal) {
+    if (!PumpisOn && elapsedSecsToday (now ()) >= PUMPStarttime && timePumpOnToday < PUMPRunTime && now()-lastChange >= 300*ONE_SECOND){
+      startPump ();
+    }
+    if (PumpisOn && timePumpOnToday >= PUMPRunTime && now()-lastChange >= 300*ONE_SECOND){
+        stopPump ();
+    }
+  }
 
         //check for error with probe
 	if (PoolTemp.isError() && now () - error_t >= ONE_SECOND) {
@@ -309,7 +326,7 @@ void loop () {
         
 	// Reset the WDT, must be done at least every 8s
 	wdt_reset ();
-        Startup = false;
+  Startup = false;
 }
 
 int cmdToInt(String cmd)
@@ -322,6 +339,7 @@ int cmdToInt(String cmd)
     if( cmd2.equalsIgnoreCase("OffTillMorning") )  return(OffTillMorning);
     if( cmd2.equalsIgnoreCase("Off Till Morning") )  return(OffTillMorning);
     if( cmd2.equalsIgnoreCase("Timed") )  return(Timed);
+    if( cmd2.equalsIgnoreCase("Legacy") ) return(Legacy);
     return (unknown);
 }
 
@@ -333,23 +351,8 @@ String overrideMode(int mode)
       case ON: return ("On");
       case OffTillMorning: return ("Off Till Morning");
       case Timed: return ("Timed");
+      case Legacy: return ("Legacy"):
     }
-}
-/*
-*      Update Unit
-*
-*      Called to Update the Unit of display for the Web Portal Interface
-*      Check if its a valid number
-*      Check if we are in Read Only mode
-*      If its changed then update the EEPROM
-*/
-void updateUnit(int newUnit) {
-  if (newUnit == 0 || newUnit == 1){
-      if (Unit != newUnit){
-        Unit = newUnit;
-        EEPROM.write(STOREDUnit, Unit);
-      }
-  }
 }
 
 /*
@@ -361,8 +364,12 @@ void updateUnit(int newUnit) {
  */
 void startPump () {
 	digitalWrite (RelayPin, HIGH);
-        if (!PumpisOn) Blink = true;
-        PumpisOn = true;
+  if (!PumpisOn){
+    Blink = true;
+    lastChange = now();
+    Serial.out.println("Pump turned On");
+  }
+  PumpisOn = true;
 }
 
 /*
@@ -374,7 +381,11 @@ void startPump () {
  */
 void stopPump () {
 	digitalWrite (RelayPin, LOW);
-        if (PumpisOn) Blink = false;
+  if (PumpisOn){
+    Blink = false;
+    lastChange = now();
+    Serial.out.println("Pump turned Off");
+  }
 	PumpisOn = false;
 }
 
@@ -418,37 +429,6 @@ const char num2char (byte num) {
 	case 9 : return ('9');
 	default: return ('e');
 	}
-}
-
-String sendHTMLfooter (){
-	
-	String s = "</body><footer>Project: ";
-	s += WHOAREWE;
-	s += " Version ";
-	s += String(VERSION,1);
-	s += " ";
-	s += extraInfo;
-        s += "<form action='go.html' id='unit'><input class='Url' name='url' value='' type='hidden'><input type='hidden' name='unit' value='C'>";
-	switch (Unit){
-        case 1:
-        s += "<input type='submit' value='°C'/>";
-        break;
-        case 0:
-        s += "<input type='submit' value='°C' disabled/>";
-        break;
-        }
-        s += "</form><form action='go.html' id='unit'><input class='Url' name='url' value='' type='hidden'><input type='hidden' name='unit' value='F' />";
-        switch (Unit){
-        case 1:
-        s += "<input type='submit' value='°F' disabled />";
-        break;
-        case 0:
-        s += "<input type='submit' value='°F' />";
-        break;
-        }
-        s += "</form><script>var u = location.href, s = u.split('/'), url; if(s[s.length - 1]) {url = s[s.length - 1]}else {url = s[s.length - 2];} var list = document.querySelectorAll('.Url'); var n; for (n = 0; n < list.length; ++n){list[n].value = url}</script></footer></center></html>";
-	return (s);
-	
 }
 
 /*
@@ -517,118 +497,12 @@ boolean sendHTMLpages (char *url) {
                   }
        		}
 	}
-         /*
-	 *	Main HTML page
-	 */
-	if (strncmp (url, "/Eric.html", 10) == 0) {
-		WiServer.print_P (htmlHeader);
-                WiServer.print ("Pool Timer Time: ");
-                WiServer.print (formatTime (elapsedSecsToday (now ())));
-		WiServer.print ("<form action=accept.html>Pool pump is <span style=\"color:red\">");
-		WiServer.print (PumpisOn?"ON":"OFF");
-		WiServer.print ("</span><br />");
-                if (PoolTemp.isError ()) {
-                  WiServer.print ("There is an Error with the ");
-                  WiServer.print (PoolTemp.getIdentifierStr ());
-                }
-                else {
-		  WiServer.print ("Pool Tempature is ");
-		  WiServer.print (PoolTemp.AveTemperature (), DEC);
-		  WiServer.print ("&deg;C");
-                }
-		WiServer.print ("<br />Pump will start running at <a style=\"color:red;text-decoration:none\" href=\"setTime.html\">");
-		WiServer.print (formatTime (PUMPStarttime));
-		WiServer.print ("</a><br />");
-		WiServer.print ("Pump will run for <a style=\"color:red;text-decoration:none\" href=\"setTime.html\">");
-		WiServer.print (formatTime (PUMPRunTime));
-		WiServer.print ("</a> hours a day<br />");
-                WiServer.print ("The Pool Pump has run for: ");
-                WiServer.print (formatTime (timePumpOnToday));
-		WiServer.print ("<br />Override state:");
-                WiServer.print ("<select name=override size=1 id='Select' onchange='doUpdateForm(); style='display:inline'>");
-                switch (Override) {
-                case normal: 
-		WiServer.print (F("<option selected />normal<option />ON<option />OFF<option />Off Till Morning<option />Timed"));
-                break;
-		case ON:
-		WiServer.print (F("<option />normal<option selected />ON<option />OFF<option />Off Till Morning<option />Timed"));
-                break;
-                case OFF:
-		WiServer.print (F("<option />normal<option />ON<option selected />OFF<option />Off Till Morning<option />Timed"));
-		break;
-                case OffTillMorning:
-		WiServer.print (F("<option />normal<option />ON<option />OFF<option selected />Off Till Morning<option />Timed"));
-		break;
-                case Timed:
-		WiServer.print (F("<option />normal<option />ON<option />OFF<option />Off Till Morning<option selected />Timed"));
-		break;
-		}
-                WiServer.print (F("</select><br /><fieldset style='border:1px none; display:none' id='timedInfo' disabled><input type='number' id='timeFormat' min='0.5' step='0.5' required/>"));
-                WiServer.print (F("<select name=timeFormat size=1 id='failSafe'onfocus='timeFormats();' onchange='doUpdateForm();' required><option selected />-- Select Time Format --<option id='sec' />Seconds<option id='min' />Minutes<option id='hour' />Hours</select><span id='myRadControl' style='display:none'>"));
-                WiServer.print (F("<br />Return To:<br /><input type='radio' name='return'value='Normal' required /> Normal (Adds to the normal time)<br />"));
-                WiServer.print (F("<input type='radio' name='return'value='Off Till Morning' required /> Off Till Morning (Overrides the normal time)</span></fieldset>"));
-                WiServer.print (F("<br /><input id='submit'type=submit />"));
-                WiServer.print (F("<script type='text/javascript'>"));
-                WiServer.print (F("function timeFormats(){var rawSel = document.getElementById('timeFormat').value;var sel = parseInt(rawSel);if(rawSel != ''){document.getElementById('min').disabled = false;document.getElementById('hour').disabled = false;if(Math.round(sel) == parseFloat(rawSel)){document.getElementById('sec').disabled = false;}else{document.getElementById('sec').disabled = true;}}else{document.getElementById('sec').disabled = true;document.getElementById('min').disabled = true;document.getElementById('hour').disabled = true;}}function doUpdateForm(){var sel = document.getElementById('mySelect').value;if( sel == 'Timed' ) {document.getElementById('timedInfo').style.display = 'inline';document.getElementById('myRadControl').style.display = 'inline';document.getElementById('timedInfo').disabled = false;if(document.getElementById('failSafe').value == '-- Select Time Format --' && sel == 'Timed'){document.getElementById('submit').disabled = true;}else{document.getElementById('submit').disabled = false;}}else {document.getElementById('timedInfo').style.display = 'none';document.getElementById('myRadControl').style.display = 'none';document.getElementById('timedInfo').disabled = true;document.getElementById('submit').disabled = false;}}"));
-                WiServer.print ("</script>");
-		WiServer.print ("</form>");
-                WiServer.print ("<a href='http://seeds.ca/app/pool/scheduler.php'>Pool Scheduler Page</a><br /><a href='http://seeds.ca/app/pool/edit.php'>Pool Edit Page</a>");
-                WiServer.print (sendHTMLfooter());
-		return true; //web page servered
-	}
-        if (strncmp (url, "/accept.html", 12) == 0) {
-             WiServer.print_P (htmlHeader);
-             WiServer.print ("<h2>Command Accepted</h2>");
-	     WiServer.print_P (htmlReturntopage);
-             WiServer.print (sendHTMLfooter());
+  // Configuration and status pages have been moved to the relay
+  if (strncmp (url, "/accept.html", 12) == 0) {
+       WiServer.print_P (htmlHeader);
+       WiServer.print ("<h2>Command Accepted</h2>");
+       WiServer.print_P (htmlReturntopage);
 	     return true;
-        }
-        if (strncmp (url, "/setTime.html", 12) == 0) {
-             WiServer.print_P (htmlHeader);
-             WiServer.print ("<div style=\"border:1px solid black\"><form action=accept.html>");
-             WiServer.print ("Change Pump Run Time to:<br />");
-             WiServer.print ("<select name=Pumpruntime size=1>");
-             switch (PUMPRunTime) {
-               case 14400:
-                 WiServer.print (F("<option selected value= \"14400\">4 Hours</option><option value= \"7200\">2 Hours</option><option value= \"3600\">1 Hour</option><option value= \"21600\">6 Hours</option>"));
-		break;
-               case 7200:
-                 WiServer.print (F("<option value= \"14400\">4 Hours</option><option selected value= \"7200\">2 Hours</option><option value= \"3600\">1 Hour</option><option value= \"21600\">6 Hours</option>"));
-		break;
-               case 3600:
-                 WiServer.print (F("<option value= \"14400\">4 Hours</option><option value= \"7200\">2 Hours</option><option selected value= \"3600\">1 Hour</option><option value= \"21600\">6 Hours</option>"));
-		break;
-               case 21600:
-                 WiServer.print (F("<option value= \"14400\">4 Hours</option><option value= \"7200\">2 Hours</option><option value= \"3600\">1 Hour</option><option selected value= \"21600\">6 Hours</option>"));
-		break;
-               default:
-                 WiServer.print (F("<option selected value= \"14400\">4 Hours</option><option value= \"7200\">2 Hours</option><option value= \"3600\">1 Hour</option><option value= \"21600\">6 Hours</option>"));
-		break;
-             }
-             WiServer.print ("</select><br /><br /><input type=submit />");
-             WiServer.print ("</form></div><br /><div style=\"border:1px solid black\"><form action=accept.html>");
-             WiServer.print ("Change Pump Start Time to:");
-             WiServer.print ("<br /><input type=number name=Pumpstarttime size=1 required min=\"0\" max=\"23.5\" step=\"0.5\" /><br />24 hour time and only hours must be put in. (time format: HH)<br />");
-             WiServer.print ("<input type=submit /></form></div>");
-             WiServer.print (sendHTMLfooter());
-	     return true;
-        }
-        /*
-        * Mistyped Page Redirects
-        *
-        * If it doesn't meet any of the above requirements,
-        * only then will we consider it to be a mistyped page and redirect to the main page
-        */
-        else {
-          if (strcmp (url, "/") == 0) {        //This Redirect is also used to connect via seeds.ca/app/pool/controller.php
-                  WiServer.print ("<head><meta http-equiv='refresh' content='0; url=Eric.html' /></head>");
-                  return true;
-          }
-          if (strcmp (url, "/eric.html") == 0){
-                  WiServer.print ("<head><meta http-equiv='refresh' content='0; url=Eric.html' /></head>");
-                  return true;
-          }
-        }
-        
+  }
 	return false; //web page not servered
 }
