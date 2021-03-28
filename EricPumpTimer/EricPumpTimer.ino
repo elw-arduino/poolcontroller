@@ -187,7 +187,7 @@ void loop () {
  
       if (!cmdactive) {
         Serial.println ("Command Terminal Activated");
-        cmdactive = true;}
+        cmdactive = true;
         if (Serial.available ()) {	// See if string is avalible
 	        str = Serial.readStringUntil ('\n');
         if (str.startsWith("setPumpTime")) {
@@ -351,7 +351,7 @@ String overrideMode(int mode)
       case ON: return ("On");
       case OffTillMorning: return ("Off Till Morning");
       case Timed: return ("Timed");
-      case Legacy: return ("Legacy"):
+      case Legacy: return ("Legacy");
     }
 }
 
@@ -367,7 +367,7 @@ void startPump () {
   if (!PumpisOn){
     Blink = true;
     lastChange = now();
-    Serial.out.println("Pump turned On");
+    Serial.println("Pump turned On");
   }
   PumpisOn = true;
 }
@@ -384,7 +384,7 @@ void stopPump () {
   if (PumpisOn){
     Blink = false;
     lastChange = now();
-    Serial.out.println("Pump turned Off");
+    Serial.println("Pump turned Off");
   }
 	PumpisOn = false;
 }
