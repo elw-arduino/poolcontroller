@@ -4,16 +4,10 @@
 #include <ESP8266HTTPClient.h>
 #include <WiFiClient.h>
 #include <Ticker.h>
-#include <lwip/napt.h>
-#include <lwip/dns.h>
-#include <dhcpserver.h>
 extern "C" {
 #include "user_interface.h"
 }
 
-// NAT Info
-#define NAPT 1000
-#define NAPT_PORT 10
 
 // Override modes
 #define normal 0x00
@@ -26,14 +20,17 @@ extern "C" {
 #define OUTOFSYNC 900000 //15 minutes
 
 ESP8266WebServer server(80);
+WiFiClient client;
 HTTPClient http;
 
 //--------------- Wifi Configuration ------------------------
-const char* ssid = "BELL514";
-const char* pass = "59716674";
-IPAddress staticIP(192, 168, 1, 91);
-IPAddress gateway(192, 168, 2, 1);
-IPAddress subnet(255, 255, 255, 0);
+// Set WiFi credentials
+#define WIFI_SSID "BELL514"
+#define WIFI_PASS "59716674"
+ 
+// Set AP credentials
+#define AP_SSID "PoolNet"
+#define AP_PASS "68Dunbar"
 //-----------------------------------------------------------
 
 //----------------- Controller Sync Info --------------------
@@ -233,40 +230,35 @@ void setup() {
   Serial.begin(9600);
   Serial.println();
   
-  WiFi.mode(WIFI_STA);
-  WiFi.config(staticIP,gateway,subnet);
   WiFi.hostname("PoolControlerRelay");
-  Serial.print("Connecting to " + String(ssid));
-  WiFi.begin(ssid, pass);
+
+  // Begin Access Point
+  WiFi.mode(WIFI_AP_STA);
+  WiFi.softAP(AP_SSID, AP_PASS);
+ 
+  // Begin WiFi
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+ 
+  // Connecting to WiFi...
+  Serial.print("Connecting to ");
+  Serial.print(WIFI_SSID);
   while (WiFi.status() != WL_CONNECTED)
   {
-    delay(500);
+    delay(100);
     Serial.print(".");
   }
-  Serial.println("Connected");
-  Serial.print("IP address: ");
+ 
+  // Connected to WiFi
+  Serial.println();
+  Serial.println("Connected!");
+  Serial.print("IP address for network ");
+  Serial.print(WIFI_SSID);
+  Serial.print(" : ");
   Serial.println(WiFi.localIP());
-  dhcps_set_dns(0,WiFi.dnsIP(0));
-  dhcps_set_dns(1,WiFi.dnsIP(1));
-  WiFi.softAPConfig(staticIP,staticIP, subnet);
-  WiFi.softAP("PoolNet","68Dunbar",HIGH);
-  delay(500);
-  Serial.println("Access Point Started");
-  Serial.print("Access Point IP: ");
+  Serial.print("IP address for network ");
+  Serial.print(AP_SSID);
+  Serial.print(" : ");
   Serial.println(WiFi.softAPIP());
-
-  err_t ret = ip_napt_init(NAPT, NAPT_PORT);
-  Serial.printf("ip_napt_init(%d,%d): ret=%d (OK=%d)\n", NAPT, NAPT_PORT, (int)ret, (int)ERR_OK);
-  if (ret == ERR_OK) {
-    ret = ip_napt_enable_no(SOFTAP_IF, 1);
-    Serial.printf("ip_napt_enable_no(SOFTAP_IF): ret=%d (OK=%d)\n", (int)ret, (int)ERR_OK);
-    if (ret == ERR_OK) {
-      Serial.printf("WiFi Network '%s' is now NATed behind '%s'\n", "PoolNet", ssid);
-    }
-  }
-  if (ret != ERR_OK) {
-    Serial.printf("NAPT initialization failed\n");
-  }
   
   server.on("/in", in);
   server.on("/", mainPage);
@@ -286,19 +278,15 @@ void loop() {
   
   server.handleClient();
   if(request){
-    http.begin("catherapyservices.ca",80,"/pool/in.php?auth=relay&t="+String(temp));
+    http.begin(client,"catherapyservices.ca",80,"/pool/in.php?auth=relay&t="+String(temp));
     int httpCode = http.GET();
     Serial.println("Status:"+String(httpCode));
-    if (httpCode > 0) {
-    String payload = http.getString();
-    Serial.println(payload);
-    }
     http.end();
     Serial.println("Seeds Temp Updated to "+String(temp)+"℃");
     request = false;
   }
   if(downstreamSyncRequired && controllerConnected){
-    http.begin("192.168.1.90",80,"/accept.html?"+downstreamSyncParams);
+    http.begin(client,"192.168.1.90",80,"/accept.html?"+downstreamSyncParams);
     lastDownstreamSyncResult = http.GET();
     if(lastDownstreamSyncResult > 0){
       lastDownstreamSync = millis();
@@ -316,6 +304,7 @@ void loop() {
     if(address.toString().c_str() == "192.168.1.90"){
       Connected = true;
     }
+    stat_info = STAILQ_NEXT(stat_info, next);
   }
   controllerConnected = Connected;
 }
