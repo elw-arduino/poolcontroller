@@ -30,7 +30,9 @@ HTTPClient http;
  
 // Set AP credentials
 #define AP_SSID "PoolNet"
-#define AP_PASS "68Dunbar"
+#define AP_PASS "PoolRelay"
+#define AP_CHANNEL 1
+#define AP_HIDDEN false
 //-----------------------------------------------------------
 
 //----------------- Controller Sync Info --------------------
@@ -233,8 +235,7 @@ void setup() {
   WiFi.hostname("PoolControlerRelay");
 
   // Begin Access Point
-  WiFi.mode(WIFI_AP_STA);
-  WiFi.softAP(AP_SSID, AP_PASS);
+  WiFi.softAP(AP_SSID, AP_PASS, AP_CHANNEL, AP_HIDDEN);
  
   // Begin WiFi
   WiFi.begin(WIFI_SSID, WIFI_PASS);
